@@ -48,6 +48,8 @@ st.markdown('Estado general de las finanzas de Calor y Control')
 
 c1, c2 = st.columns(2)
 
+################## Pie de top 10 prods ##################
+
 df_sorted = ventas.nlargest(10, 'ventas_cant')
 fig = go.Figure(data=[go.Pie(
     labels=df_sorted['producto'],
@@ -74,6 +76,9 @@ fig.update_layout(
 
 c1.plotly_chart(fig)
 
+################## Info de prod en almacén ##################
+
+
 ventas['total_almacen'] = ventas['costo_prom'] * ventas['existencias']
 total_almacen_sum = ventas['total_almacen'].sum()
 
@@ -82,9 +87,9 @@ c2.error(f"{formatted_sum} \nTotal de producto en almacén")
 
 ################## Segunda parte ##################
 
-productos = ventascompras['producto'].tolist()
+################## Gráfica cantidad  vs. importe ##################
 
-import plotly.express as px
+productos = ventascompras['producto'].tolist()
 
 fig2 = px.scatter(ventascompras, x='cantidad', y='total_monto', color='producto',
                  title='Gráfica Cantidad vs Importe', color_continuous_scale='Reds_r')
@@ -92,6 +97,13 @@ fig2 = px.scatter(ventascompras, x='cantidad', y='total_monto', color='producto'
 fig2.update_layout(
     xaxis_title='Cantidad',
     yaxis_title='Importe',
+    title={
+        'text': 'Gráfica Cantidad vs Importe',
+        'x': 0.5,
+        'y': 0.9,
+        'xanchor': 'center',
+        'yanchor': 'top'
+    },
     legend_title='Producto'
 )
 
@@ -121,7 +133,9 @@ fig3.update_layout(
     title={
         'text': 'Compras y ventas de productos con mayor importancia',
         'x': 0.5,
-        'y': 0.9
+        'y': 0.9,
+        'xanchor': 'center',
+        'yanchor': 'top'
     },
     legend={'x': 1, 'y': 0.5},
     # plot_bgcolor='White',
