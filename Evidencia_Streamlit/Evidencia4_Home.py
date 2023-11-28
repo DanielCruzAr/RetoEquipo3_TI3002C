@@ -7,6 +7,7 @@ import plotly.express as px
 import plotly.figure_factory as ff
 import plotly.graph_objects as go
 from bokeh.plotting import figure
+from backend.ml_model import predict_next_month, parse_data
 
 # Fuente verdana
 # st.set_page_config(font="verdana")
@@ -51,7 +52,15 @@ on = st.sidebar.toggle('Switch de proyección', value=False)
 if not on:
     st.sidebar.write('Proyección desactivada')
 else:
-    st.sidebar.write('Proyección activada')
+    if subset_data3.shape[0] < 300:
+        st.sidebar.write('No hay suficientes datos para proyectar')
+        on = False
+    elif subset_data3["codigo_proveedor"].nunique() > 1:
+        st.sidebar.write('Seleccione un único producto para proyectar')
+        on = False
+    else:
+        subset_data3 = predict_next_month(subset_data3)
+
 
 
 ################## Primera página ##################
@@ -89,12 +98,14 @@ fig.update_layout(font_family="Verdana")
 st.plotly_chart(fig)
 
 ################## Existencias por producto ##################
+if not on:
+    df_product = parse_data(subset_data3)
+    columns = ["existencias"]
+else:
+    df_product = subset_data3
+    columns = ["existencias", "lim_sup", "lim_inf"]
 
-metros = salidas[salidas["unidad"] == "M"]
-top_categories = metros["codigo_proveedor"].value_counts().head(1).index
-top_prod = metros[metros["codigo_proveedor"].isin(top_categories)]
-
-fig1 = px.line(top_prod, x=top_prod.index, y="existencias", color_discrete_sequence=px.colors.sequential.Reds_r)
+fig1 = px.line(df_product, x=df_product.index, y=columns, color_discrete_sequence=px.colors.sequential.Reds_r)
 fig1.update_layout(width=800, height=400)
 fig1.update_xaxes(title_text="Fecha")
 fig1.update_yaxes(title_text="Existencias (M)")
@@ -102,37 +113,3 @@ fig1.update_layout(title_text="Existencias por Codigo de Proveedor")
 fig1.update_layout(font_family="Verdana")
 
 st.plotly_chart(fig1)
-
-'''
-################## Gráfica compras y ventas ##################
-
-ventascompras['fecha'] = pd.to_datetime(ventascompras['fecha'], dayfirst=True)
-ventascompras['año'] = ventascompras['fecha'].dt.year
-
-df1 = ventascompras.sort_values(by=['fecha'], ascending=[True])
-fig1 = px.line(df1, x='fecha', y='total_monto', color='movimiento',
-              title='Compras y ventas de productos con mayor importancia',
-              labels={'fecha': 'Fecha', 'total_monto': 'Monto en Pesos'},
-              hover_name='producto',
-              hover_data=['cantidad', 'total_monto'],
-              color_discrete_map={'venta': 'green', 'compra': '#90131C'},
-              markers=True,
-              )
-
-fig1.update_layout(
-    font_family='Verdana',
-    font_color='Black',
-    font_size=14,
-    title={
-        'text': 'Compras y ventas de productos con mayor importancia',
-        'x': 0.5,
-        'y': 0.9
-    },
-    legend={'x': 1, 'y': 0.5},
-    # plot_bgcolor='White',
-    xaxis=dict(gridcolor='#D9D9D9'),
-    yaxis=dict(gridcolor='#D9D9D9')
-)
-
-st.plotly_chart(fig1)
-'''
