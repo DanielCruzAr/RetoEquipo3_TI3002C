@@ -8,8 +8,7 @@ import plotly.figure_factory as ff
 import plotly.graph_objects as go
 from backend.ml_model import predict_next_month, parse_data
 
-# Fuente verdana
-# st.set_page_config(font="verdana")
+st.set_page_config(layout="centered", page_title="Home")
 
 compras = pd.read_csv('compras.csv')
 ventas = pd.read_csv('ventas.csv')
@@ -36,7 +35,7 @@ st.sidebar.subheader('Existencias por producto')
 subset_data3 = subset_data4
 producto_input = st.sidebar.selectbox('Producto',
                                          subset_data4.groupby('codigo_proveedor').count().reset_index()['codigo_proveedor'].tolist())
-# if len(producto_input) > 0:
+
 subset_data3 = subset_data4[subset_data4['codigo_proveedor'] == producto_input]
 
 st.sidebar.subheader('Proyectar')
@@ -44,18 +43,14 @@ st.sidebar.subheader('Proyectar')
 stock_unit = subset_data3["unidad"].unique()[0]
 on = st.sidebar.toggle('Switch de proyección', value=False)
 if not on:
-    st.sidebar.write('Proyección desactivada')
+    st.sidebar.warning('Proyección desactivada')
 else:
     if subset_data3.shape[0] < 300:
-        st.sidebar.write('No hay suficientes datos para proyectar')
-        on = False
-    elif subset_data3["codigo_proveedor"].nunique() > 1:
-        st.sidebar.write('Seleccione un único producto para proyectar')
+        st.sidebar.warning('No hay suficientes datos para proyectar')
         on = False
     else:
         subset_data3 = predict_next_month(subset_data3)
-
-
+        st.sidebar.success('Proyección activada')
 
 ################## Primera página ##################
 
@@ -83,12 +78,14 @@ c2.error(f"Total producto en almacén: {formatted_sum}")
 # Ventas promedio
 
 promedio_ventas = ventas['ventas_cant'].mean()
-c3.error(f"Ventas promedio: {promedio_ventas:.2f}")
+c3.error(f"Cantidad vendida promedio: {promedio_ventas:.2f}")
 
 # Stock promedio
 
 promedio_stock = subset_data3['existencias'].mean()
 c4.error(f"Stock promedio: {promedio_stock:.2f}")
+
+st.markdown('**Nota**: *Fórmulas de indicadores al final de la página.*')
 
 ################## Gráfica de productos con menos existencias ##################
 
@@ -153,3 +150,13 @@ fig1.update_layout(
 )
 
 st.plotly_chart(fig1)
+
+################## Tablero de existencias futuras ##################
+if on:
+    st.markdown('**Existencias futuras**')
+    st.table(subset_data3[["existencias", "limite superior", "limite inferior"]].tail(15))
+
+st.markdown('- *Rotación de inventario = costo de mercancías vendidas / inventario promedio*')
+st.markdown('- *Total producto en almacén = costo promedio * existencias*')
+st.markdown('- *Cantidad vendida promedio = promedio de cantidad de ventas*')
+st.markdown('- *Stock promedio = promedio de existencias*')

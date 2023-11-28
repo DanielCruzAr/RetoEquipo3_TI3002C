@@ -109,10 +109,10 @@ fig2.update_layout(
     yaxis_title='Importe',
     title={
         'text': 'Gráfica Cantidad vs Importe',
-        'x': 0.5,
-        'y': 0.9,
-        'xanchor': 'center',
-        'yanchor': 'top'
+        # 'x': 0.5,
+        # 'y': 0.9,
+        # 'xanchor': 'center',
+        # 'yanchor': 'top'
     },
     legend_title='Producto'
 )
@@ -139,10 +139,10 @@ fig3.update_layout(
     font_size=14,
     title={
         'text': 'Compras y ventas de productos con mayor importancia',
-        'x': 0.5,
-        'y': 0.9,
-        'xanchor': 'center',
-        'yanchor': 'top'
+        # 'x': 0.5,
+        # 'y': 0.9,
+        # 'xanchor': 'center',
+        # 'yanchor': 'top'
     },
     legend={'x': 1, 'y': 0.5},
     # plot_bgcolor='White',
