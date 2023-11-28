@@ -1,10 +1,7 @@
 from matplotlib import pyplot as plt
 import streamlit as st
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
 import plotly.express as px
-import plotly.figure_factory as ff
 import plotly.graph_objects as go
 from backend.ml_model import predict_next_month, parse_data
 
