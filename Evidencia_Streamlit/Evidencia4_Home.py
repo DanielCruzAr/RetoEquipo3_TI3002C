@@ -16,15 +16,9 @@ ventas = pd.read_csv('ventas.csv')
 salidas = pd.read_csv('salidas.csv')
 ventascompras = pd.read_csv('ventascompras.csv')
 
-################## Sidebar ##################
+ventas['ult_venta'] = pd.to_datetime(ventas['ult_venta'], format='%Y-%m-%d')
 
-# st.markdown("""
-# <style>
-#     [data-testid=stSidebar] {
-#         background-color: #FAEAE3;
-#     }
-# </style>
-# """, unsafe_allow_html=True)
+################## Sidebar ##################
 
 st.sidebar.image('logo.png')
 
@@ -59,10 +53,38 @@ else:
 st.title('Existencias')
 st.markdown('Cantidad de material en almacén')
 
+################## Indicadores ##################
+
+c1, c2, c3, c4 = st.columns(4)
+
+# Rotación de inventario
+
+ventas['año_venta'] = ventas['ult_venta'].dt.year
+df_inventario = ventas[ventas['año_venta'] == 2023]
+rotacion = (df_inventario['costo_prom'] * df_inventario['existencias']).sum() / df_inventario['existencias'].mean()
+c1.error(f"Rotación de inventario: {rotacion:.2f}")
+
+# Info de prod en almacén 
+
+ventas['total_almacen'] = ventas['costo_prom'] * ventas['existencias']
+total_almacen_sum = ventas['total_almacen'].sum()
+formatted_sum = f"${total_almacen_sum/1000000:.2f} M"
+c2.error(f"Total producto en almacén: {formatted_sum}")
+
+# Ventas promedio
+
+promedio_ventas = ventas['ventas_cant'].mean()
+c3.error(f"Ventas promedio: {promedio_ventas:.2f}")
+
+# Stock promedio
+
+promedio_stock = subset_data3['existencias'].mean()
+c4.error(f"Stock promedio: {promedio_stock:.2f}")
+
 ################## Gráfica de productos con menos existencias ##################
 
 # Filter the dataframe by the most recent dates
-salidas1 = salidas.set_index("fecha")
+salidas1 = subset_data4.set_index("fecha")
 most_recent_date = salidas1.index.max()
 # Filter the dataframe for the most recent date
 df_recent = salidas1[salidas1.index == most_recent_date]
@@ -82,7 +104,10 @@ fig = go.Figure(data=[go.Bar(
 fig.update_layout(width=800, height=400)
 fig.update_xaxes(title_text="Existencias")
 fig.update_yaxes(title_text="Productos")
-fig.update_layout(title_text="Productos con menos existencias")
+if len(unidad_input) > 0:
+    fig.update_layout(title_text=f"Productos medidos en {unidad_input} con menos existencias")
+else:
+    fig.update_layout(title_text="Productos con menos existencias")
 fig.update_layout(coloraxis=dict(colorscale="Reds_r"))
 fig.update_layout(font_family="Verdana")
 
@@ -102,37 +127,3 @@ fig1.update_layout(title_text="Existencias por Codigo de Proveedor")
 fig1.update_layout(font_family="Verdana")
 
 st.plotly_chart(fig1)
-
-'''
-################## Gráfica compras y ventas ##################
-
-ventascompras['fecha'] = pd.to_datetime(ventascompras['fecha'], dayfirst=True)
-ventascompras['año'] = ventascompras['fecha'].dt.year
-
-df1 = ventascompras.sort_values(by=['fecha'], ascending=[True])
-fig1 = px.line(df1, x='fecha', y='total_monto', color='movimiento',
-              title='Compras y ventas de productos con mayor importancia',
-              labels={'fecha': 'Fecha', 'total_monto': 'Monto en Pesos'},
-              hover_name='producto',
-              hover_data=['cantidad', 'total_monto'],
-              color_discrete_map={'venta': 'green', 'compra': '#90131C'},
-              markers=True,
-              )
-
-fig1.update_layout(
-    font_family='Verdana',
-    font_color='Black',
-    font_size=14,
-    title={
-        'text': 'Compras y ventas de productos con mayor importancia',
-        'x': 0.5,
-        'y': 0.9
-    },
-    legend={'x': 1, 'y': 0.5},
-    # plot_bgcolor='White',
-    xaxis=dict(gridcolor='#D9D9D9'),
-    yaxis=dict(gridcolor='#D9D9D9')
-)
-
-st.plotly_chart(fig1)
-'''

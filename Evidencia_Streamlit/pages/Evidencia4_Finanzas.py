@@ -26,18 +26,25 @@ st.sidebar.title('Filtros')
 st.sidebar.subheader('Filtrar por tiempo')
 
 subset_data4 = ventascompras
-unidad_input = st.sidebar.multiselect('Mes',
-                                         ventascompras.groupby('mes').count().reset_index()['mes'].tolist())
-if len(unidad_input) > 0:
-    subset_data4 = ventascompras[ventascompras['mes'].isin(unidad_input)]
-
-st.sidebar.subheader('Año')
+meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+mes_input = st.sidebar.multiselect('Mes', meses)
+mes_numerico = [meses.index(mes) + 1 for mes in mes_input]
+if len(mes_numerico) > 0:
+    subset_data4 = ventascompras[ventascompras['mes'].isin(mes_numerico)]
 
 subset_data3 = subset_data4
-producto_input = st.sidebar.multiselect('Año',
+year_input = st.sidebar.multiselect('Año',
                                          subset_data4.groupby('año').count().reset_index()['año'].tolist())
+if len(year_input) > 0:
+    subset_data3 = subset_data4[subset_data4['año'].isin(year_input)]
+
+st.sidebar.subheader('Filtrar por producto')
+
+subset_data2 = subset_data3
+producto_input = st.sidebar.multiselect('Producto',
+                                         subset_data3.groupby('producto').count().reset_index()['producto'].tolist())
 if len(producto_input) > 0:
-    subset_data3 = subset_data4[subset_data4['año'].isin(producto_input)]
+    subset_data2 = subset_data3[subset_data3['producto'].isin(producto_input)]
 
 ################## Finanzas ##################
 
@@ -46,53 +53,56 @@ st.markdown('Estado general de las finanzas de Calor y Control')
 
 ################## Primera parte ##################
 
-c1, c2 = st.columns(2)
-
 ################## Pie de top 10 prods ##################
 
-df_sorted = ventas.nlargest(10, 'ventas_cant')
+df_sorted = subset_data4[subset_data4['movimiento'] == 'venta']
+df_sorted = df_sorted.nlargest(10, 'cantidad')
 fig = go.Figure(data=[go.Pie(
     labels=df_sorted['producto'],
-    values=df_sorted['ventas_cant'],
-    hoverinfo='label+percent',
+    values=df_sorted['cantidad'],
     hole=0.5,
     marker=dict(colors=px.colors.sequential.Reds_r),
-    # title='Top 10 productos más vendidos',
     textinfo='value',
     textposition='inside',
 )])
 
-fig.update_layout(
-    font_family='Verdana',
-    # font_color='#90131C',
-    title={
-        'text': 'Top 10 productos más vendidos',
-        # 'x': 0.5,
-        # 'y': 0.9
-    },
-    font_size=14,
-    legend={'x': 1, 'y': 0.5}
-)
+if len(mes_input) > 0:
+    fig.update_layout(
+        font_family='Verdana',
+        # font_color='#90131C',
+        title={
+            'text': f'Top 10 productos más vendidos en {mes_input}',
+            # 'x': 0.5,
+            # 'y': 0.9
+        },
+        font_size=14,
+        legend={'x': 1, 'y': 0.5}
+    )
 
-c1.plotly_chart(fig)
+else:
+    fig.update_layout(
+        font_family='Verdana',
+        # font_color='#90131C',
+        title={
+            'text': 'Top 10 productos más vendidos',
+            # 'x': 0.5,
+            # 'y': 0.9
+        },
+        font_size=14,
+        legend={'x': 1, 'y': 0.5}
+    )
 
-################## Info de prod en almacén ##################
-
-
-ventas['total_almacen'] = ventas['costo_prom'] * ventas['existencias']
-total_almacen_sum = ventas['total_almacen'].sum()
-
-formatted_sum = f"${total_almacen_sum/1000000:.2f} M"
-c2.error(f"{formatted_sum} \nTotal de producto en almacén")
+st.plotly_chart(fig)
 
 ################## Segunda parte ##################
 
 ################## Gráfica cantidad  vs. importe ##################
 
-productos = ventascompras['producto'].tolist()
+productos = subset_data2['producto'].tolist()
 
-fig2 = px.scatter(ventascompras, x='cantidad', y='total_monto', color='producto',
-                 title='Gráfica Cantidad vs Importe', color_continuous_scale='Reds_r')
+fig2 = px.scatter(subset_data2, x='cantidad', y='total_monto', color='producto',
+                 title='Gráfica Cantidad vs Importe', color_continuous_scale='Reds_r',
+                 hover_data=['producto', 'cantidad', 'total_monto', 'movimiento'],)
 
 fig2.update_layout(
     xaxis_title='Cantidad',
@@ -113,10 +123,7 @@ st.plotly_chart(fig2)
 
 ################## Gráfica compras y ventas ##################
 
-ventascompras['fecha'] = pd.to_datetime(ventascompras['fecha'], dayfirst=True)
-ventascompras['año'] = ventascompras['fecha'].dt.year
-
-df1 = ventascompras.sort_values(by=['fecha'], ascending=[True])
+df1 = subset_data2.sort_values(by=['fecha'], ascending=[True])
 fig3 = px.line(df1, x='fecha', y='total_monto', color='movimiento',
               title='Compras y ventas de productos con mayor importancia',
               labels={'fecha': 'Fecha', 'total_monto': 'Monto en Pesos'},
