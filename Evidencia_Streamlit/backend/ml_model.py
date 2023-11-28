@@ -46,8 +46,8 @@ def train_model_2(df_product, model, predictors):
 
 def make_predictions(df_product, model1, model2, mae):
     df_target = df_product.copy()
-    df_target["lim_sup"] = np.nan
-    df_target["lim_inf"] = np.nan
+    df_target["limite superior"] = np.nan
+    df_target["limite inferior"] = np.nan
     predictors = ['salidas', 'existencias', 'ordinal']
 
     start = 30
@@ -63,8 +63,8 @@ def make_predictions(df_product, model1, model2, mae):
                                     "existencias": next_existencias[-1], 
                                     "salidas": next_salidas[-1],
                                     "ordinal": next_day.toordinal(),
-                                    "lim_sup": next_existencias[-1] + mae,
-                                    "lim_inf": next_existencias[-1] - mae}, 
+                                    "limite superior": next_existencias[-1] + mae,
+                                    "limite inferior": next_existencias[-1] - mae}, 
                                     index=[next_day])])
         
     return df_target

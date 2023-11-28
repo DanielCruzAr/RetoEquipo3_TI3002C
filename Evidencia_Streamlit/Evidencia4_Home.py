@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 import plotly.express as px
 import plotly.figure_factory as ff
 import plotly.graph_objects as go
-from bokeh.plotting import figure
 from backend.ml_model import predict_next_month, parse_data
 
 # Fuente verdana
@@ -41,13 +40,14 @@ if len(unidad_input) > 0:
 st.sidebar.subheader('Existencias por producto')
 
 subset_data3 = subset_data4
-producto_input = st.sidebar.multiselect('Producto',
+producto_input = st.sidebar.selectbox('Producto',
                                          subset_data4.groupby('codigo_proveedor').count().reset_index()['codigo_proveedor'].tolist())
-if len(producto_input) > 0:
-    subset_data3 = subset_data4[subset_data4['codigo_proveedor'].isin(producto_input)]
+# if len(producto_input) > 0:
+subset_data3 = subset_data4[subset_data4['codigo_proveedor'] == producto_input]
 
 st.sidebar.subheader('Proyectar')
 
+stock_unit = subset_data3["unidad"].unique()[0]
 on = st.sidebar.toggle('Switch de proyección', value=False)
 if not on:
     st.sidebar.write('Proyección desactivada')
@@ -103,13 +103,28 @@ if not on:
     columns = ["existencias"]
 else:
     df_product = subset_data3
-    columns = ["existencias", "lim_sup", "lim_inf"]
+    columns = ["existencias", "limite superior", "limite inferior"]
 
 fig1 = px.line(df_product, x=df_product.index, y=columns, color_discrete_sequence=px.colors.sequential.Reds_r)
 fig1.update_layout(width=800, height=400)
 fig1.update_xaxes(title_text="Fecha")
-fig1.update_yaxes(title_text="Existencias (M)")
+fig1.update_yaxes(title_text=f"Existencias ({stock_unit})")
 fig1.update_layout(title_text="Existencias por Codigo de Proveedor")
 fig1.update_layout(font_family="Verdana")
+fig1.update_layout(
+    xaxis=dict(
+        rangeselector=dict(
+            buttons=[
+                dict(count=1, label="1 día", step="day", stepmode="backward"),
+                dict(count=7, label="1 sem", step="day", stepmode="backward"),
+                dict(count=1, label="1 mes", step="month", stepmode="backward"),
+                dict(count=6, label="6 mes", step="month", stepmode="backward"),
+                dict(label="todos", step="all")
+            ]
+        ),
+        rangeslider=dict(visible=True),
+        type="date"
+    )
+)
 
 st.plotly_chart(fig1)
