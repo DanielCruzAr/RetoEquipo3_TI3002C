@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_absolute_error, mean_squared_error
+from sklearn.metrics import mean_absolute_error, r2_score
 from datetime import timedelta
 
 def parse_data(data):
@@ -77,7 +77,8 @@ def predict_next_month(data):
     predictors = ['salidas', 'existencias', 'ordinal']
     predictions1 = train_model_1(df_product, model1, predictors)
     predictions2 = train_model_2(df_product, model2, predictors)
+    r2 = r2_score(predictions1["Target"], predictions1["preds"])
     mae1 = mean_absolute_error(predictions1["Target"], predictions1["preds"])
 
     df_target = make_predictions(df_product, model1, model2, mae1)
-    return df_target
+    return df_target, r2

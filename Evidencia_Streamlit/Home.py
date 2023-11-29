@@ -39,6 +39,7 @@ st.sidebar.subheader('Proyectar')
 
 stock_unit = subset_data3["unidad"].unique()[0]
 on = st.sidebar.toggle('Switch de proyección', value=False)
+r2 = 0
 if not on:
     st.sidebar.warning('Proyección desactivada')
 else:
@@ -46,7 +47,7 @@ else:
         st.sidebar.warning('No hay suficientes datos para proyectar')
         on = False
     else:
-        subset_data3 = predict_next_month(subset_data3)
+        subset_data3, r2 = predict_next_month(subset_data3)
         st.sidebar.success('Proyección activada')
 
 ################## Primera página ##################
@@ -150,8 +151,18 @@ st.plotly_chart(fig1)
 
 ################## Tablero de existencias futuras ##################
 if on:
+    df_salidas = df_product.tail(15)
+    fig2 = px.line(df_salidas, x=df_salidas.index, y=["salidas"], color_discrete_sequence=px.colors.sequential.Reds_r)
+    fig2.update_layout(width=800, height=400)
+    fig2.update_xaxes(title_text="Fecha")
+    fig2.update_yaxes(title_text=f"Salidas")
+    fig2.update_layout(title_text="Próximas salidas estimadas")
+    fig2.update_layout(font_family="Verdana")
+    st.plotly_chart(fig2)
+
     st.markdown('**Existencias futuras**')
-    st.table(subset_data3[["existencias", "limite superior", "limite inferior"]].tail(15))
+    st.table(subset_data3[["salidas", "existencias", "limite superior", "limite inferior"]].tail(15))
+    st.markdown(f'- *R2 del modelo = {r2:.2f}*')
 
 st.markdown('- *Rotación de inventario = costo de mercancías vendidas / inventario promedio*')
 st.markdown('- *Total producto en almacén = costo promedio * existencias*')
